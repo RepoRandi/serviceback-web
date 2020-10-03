@@ -1,0 +1,56 @@
+version: '3'
+services:
+  database:
+    image: 'postgres'
+    env_file:
+      - env/.env.development.local
+    ports:
+      - 5432:5432
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+  sb-server:
+    container_name: sb-server
+    build:
+      context: ./server
+      target: development
+    volumes:
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - env/.env.development.local
+    environment:
+      - TYPEORM_HOST=database
+    ports:
+      - 8000:8000
+    command: yarn dev
+    depends_on:
+      - database
+  sb-admin:
+    container_name: sb-admin
+    build:
+      context: ./admin
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+    env_file:
+      - env/.env.development.local
+    ports:
+      - 3001:3001
+    stdin_open: true
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: yarn dev
+  sb-webapp:
+    container_name: sb-webapp
+    build:
+      context: ./webapp
+    volumes:
+      - ./webapp:/app
+      - /app/node_modules
+    env_file:
+      - env/.env.development.local
+    ports:
+      - 3000:3000
+    command: yarn dev
+volumes:
+  database-data:
